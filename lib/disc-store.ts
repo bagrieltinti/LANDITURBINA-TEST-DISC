@@ -4,7 +4,7 @@ import { getAdminDb } from "./firebase-admin";
 import type { DiscTestInput, DiscTestRecord, LeadData } from "./disc-types";
 import { normalizeName, normalizeNameKey, onlyDigits } from "./normalization";
 
-type LegacyUserBucket = Record<string, { tests?: Record<string, any> }>;
+type LegacyUserBucket = Record<string, { tests?: Record<string, unknown> }>;
 
 function buildRecord(id: string, value: any): DiscTestRecord | null {
   const leadData = value.leadData || value.user || {};
@@ -38,26 +38,36 @@ function sortNewest(tests: DiscTestRecord[]) {
 }
 
 async function getModernTests() {
-  const snapshot = await getAdminDb().ref("discTests").get();
-  const data = snapshot.exists() ? snapshot.val() : {};
-  return Object.entries(data)
-    .map(([id, value]) => buildRecord(id, value))
-    .filter(Boolean) as DiscTestRecord[];
+  try {
+    const snapshot = await getAdminDb().ref("discTests").get();
+    const data = snapshot.exists() ? snapshot.val() : {};
+    return Object.entries(data)
+      .map(([id, value]) => buildRecord(id, value))
+      .filter(Boolean) as DiscTestRecord[];
+  } catch (error) {
+    console.warn("Não foi possível ler discTests; usando users/{telefone}/tests.", error);
+    return [];
+  }
 }
 
 async function getLegacyTests() {
-  const snapshot = await getAdminDb().ref("users").get();
-  const users = (snapshot.exists() ? snapshot.val() : {}) as LegacyUserBucket;
-  const tests: DiscTestRecord[] = [];
+  try {
+    const snapshot = await getAdminDb().ref("users").get();
+    const users = (snapshot.exists() ? snapshot.val() : {}) as LegacyUserBucket;
+    const tests: DiscTestRecord[] = [];
 
-  Object.entries(users).forEach(([phoneDigits, user]) => {
-    Object.entries(user.tests || {}).forEach(([testId, value]) => {
-      const record = buildRecord(`legacy_${phoneDigits}_${testId}`, { ...value, phoneDigits });
-      if (record) tests.push(record);
+    Object.entries(users).forEach(([phoneDigits, user]) => {
+      Object.entries(user.tests || {}).forEach(([testId, value]) => {
+        const record = buildRecord(`${phoneDigits}_${testId}`, { ...(value as object), phoneDigits });
+        if (record) tests.push(record);
+      });
     });
-  });
 
-  return tests;
+    return tests;
+  } catch (error) {
+    console.error("Não foi possível ler users/{telefone}/tests.", error);
+    return [];
+  }
 }
 
 export async function listAllTests() {
@@ -90,7 +100,7 @@ export async function saveDiscTest(input: DiscTestInput) {
   }
 
   const now = new Date().toISOString();
-  const ref = db.ref("discTests").push();
+  const ref = db.ref(`users/${phoneDigits}/tests`).push();
   const testId = ref.key;
 
   if (!testId) throw new Error("Não foi possível gerar o ID do teste.");
@@ -101,9 +111,6 @@ export async function saveDiscTest(input: DiscTestInput) {
       nomeCompleto: normalizedName,
       telefone: input.user.telefone,
     },
-    normalizedName,
-    normalizedNameKey,
-    phoneDigits,
     rawAnswers: input.answers,
     rawScores: input.result.rawScores,
     percentages: input.result.percentages,
@@ -111,17 +118,19 @@ export async function saveDiscTest(input: DiscTestInput) {
     secondaryProfile: input.result.secondaryProfile,
   };
 
-  const updates: Record<string, any> = {
-    [`discTests/${testId}`]: record,
-    [`leadProfiles/${normalizedNameKey}/nomeCompleto`]: normalizedName,
-    [`leadProfiles/${normalizedNameKey}/phoneDigits`]: phoneDigits,
-    [`leadProfiles/${normalizedNameKey}/telefone`]: input.user.telefone,
-    [`leadProfiles/${normalizedNameKey}/lastTestAt`]: now,
-    [`leadProfiles/${normalizedNameKey}/tests/${testId}`]: true,
-    [`phoneIndex/${phoneDigits}/${testId}`]: true,
-  };
+  await ref.set(record);
+  try {
+    await db.ref(`users/${phoneDigits}/profile`).update({
+      nomeCompleto: normalizedName,
+      normalizedName,
+      normalizedNameKey,
+      phoneDigits,
+      telefone: input.user.telefone,
+      lastTestAt: now,
+    });
+  } catch (error) {
+    console.warn("Teste salvo, mas não foi possível atualizar o perfil resumido.", error);
+  }
 
-  await db.ref().update(updates);
-
-  return buildRecord(testId, record);
+  return buildRecord(`${phoneDigits}_${testId}`, { ...record, phoneDigits });
 }
