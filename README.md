@@ -15,6 +15,10 @@ View your app in AI Studio: https://ai.studio/apps/8e7f7908-ae6a-4e07-8bba-20c5d
 
 1. Install dependencies:
    `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
+2. Configure `.env.local` using [.env.example](.env.example). The app needs Firebase Admin credentials and `ADMIN_SESSION_SECRET` for secure server-side reads/writes and `/admin`.
 3. Run the app:
    `npm run dev`
+
+## Admin
+
+Open `/admin` after deploying or running locally. On first access, create the dashboard password. After that, access is protected by an HTTP-only session cookie and all test data is read through server-side API routes.
