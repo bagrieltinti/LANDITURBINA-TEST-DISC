@@ -67,6 +67,30 @@ function deltaSentence(value: number) {
   return 'permaneceu estável';
 }
 
+function polarToCartesian(cx: number, cy: number, radius: number, angleInDegrees: number) {
+  const angleInRadians = ((angleInDegrees - 90) * Math.PI) / 180;
+  return {
+    x: cx + radius * Math.cos(angleInRadians),
+    y: cy + radius * Math.sin(angleInRadians),
+  };
+}
+
+function donutSegmentPath(cx: number, cy: number, outerRadius: number, innerRadius: number, startAngle: number, endAngle: number) {
+  const outerStart = polarToCartesian(cx, cy, outerRadius, endAngle);
+  const outerEnd = polarToCartesian(cx, cy, outerRadius, startAngle);
+  const innerStart = polarToCartesian(cx, cy, innerRadius, startAngle);
+  const innerEnd = polarToCartesian(cx, cy, innerRadius, endAngle);
+  const largeArcFlag = endAngle - startAngle <= 180 ? '0' : '1';
+
+  return [
+    `M ${outerStart.x} ${outerStart.y}`,
+    `A ${outerRadius} ${outerRadius} 0 ${largeArcFlag} 0 ${outerEnd.x} ${outerEnd.y}`,
+    `L ${innerStart.x} ${innerStart.y}`,
+    `A ${innerRadius} ${innerRadius} 0 ${largeArcFlag} 1 ${innerEnd.x} ${innerEnd.y}`,
+    'Z',
+  ].join(' ');
+}
+
 function safePdfName(value: string) {
   return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w-]+/g, '_');
 }
@@ -428,44 +452,43 @@ export default function Home() {
         )}
 
         {appState === 'history' && (
-          <motion.section key="history" initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.97 }} className="flex-1 flex items-center justify-center p-6">
-            <div className="w-full max-w-3xl bg-panel/40 border border-border rounded-xl p-6 md:p-8">
-              <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-6">
-                <div>
+          <motion.section key="history" initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.97 }} className="flex-1 flex items-center justify-center p-4 md:p-6">
+            <div className="w-full max-w-4xl bg-panel/40 border border-border rounded-xl p-5 md:p-7 overflow-hidden">
+              <div className="grid grid-cols-1 lg:grid-cols-[1fr_minmax(260px,320px)] gap-5 mb-6">
+                <div className="min-w-0">
                   <p className="text-xs font-mono text-primary uppercase tracking-widest">Histórico encontrado</p>
-                  <h2 className="font-display text-3xl font-bold text-white mt-1">{normalizedDisplayName}</h2>
-                  <p className="text-sm text-foreground/55 mt-2">
-                    Encontramos {previousTests.length} teste(s) anterior(es). Ao finalizar o novo teste, o comparativo será gerado automaticamente por data, usando todo o histórico desde o primeiro registro.
+                  <h2 className="font-display text-2xl md:text-3xl font-bold text-white mt-1 leading-tight break-words">{normalizedDisplayName}</h2>
+                  <p className="text-sm text-foreground/55 mt-2 max-w-2xl">
+                    Encontramos {previousTests.length} teste(s) anterior(es). Escolha uma análise anterior ou inicie um novo teste para atualizar o comparativo.
                   </p>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full md:w-auto">
-                  <button onClick={() => handleViewPastResult()} className="group min-w-44 rounded-xl border border-white/15 bg-white/[0.03] px-5 py-4 text-left transition-all hover:-translate-y-0.5 hover:border-white/35 hover:bg-white/[0.06] focus:outline-none focus:ring-2 focus:ring-white/25">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2">
+                  <button onClick={() => handleViewPastResult()} className="group rounded-lg border border-white/15 bg-white/[0.03] px-4 py-3 text-left transition-all hover:border-white/35 hover:bg-white/[0.06] focus:outline-none focus:ring-2 focus:ring-white/25">
                     <span className="block text-[10px] font-mono uppercase tracking-widest text-foreground/40">Consulta rápida</span>
-                    <span className="mt-1 block font-display text-sm font-bold text-white">VER ÚLTIMA ANÁLISE</span>
-                    <span className="mt-2 block text-xs leading-snug text-foreground/55">Abre o resultado completo mais recente.</span>
+                    <span className="mt-1 block font-display text-sm font-bold text-white">Ver última análise</span>
+                    <span className="mt-1 block text-xs leading-snug text-foreground/55">Resultado completo mais recente.</span>
                   </button>
-                  <button onClick={() => setAppState('test')} className="group min-w-44 rounded-xl border border-primary/40 bg-primary px-5 py-4 text-left text-white shadow-lg shadow-primary/10 transition-all hover:-translate-y-0.5 hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/60">
+                  <button onClick={() => setAppState('test')} className="group rounded-lg border border-primary/40 bg-primary px-4 py-3 text-left text-white shadow-lg shadow-primary/10 transition-all hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/60">
                     <span className="block text-[10px] font-mono uppercase tracking-widest text-white/65">Novo ciclo</span>
-                    <span className="mt-1 block font-display text-sm font-bold">FAZER NOVO TESTE</span>
-                    <span className="mt-2 block text-xs leading-snug text-white/70">Atualiza seu histórico e gera novo comparativo.</span>
+                    <span className="mt-1 block font-display text-sm font-bold">Fazer novo teste</span>
+                    <span className="mt-1 block text-xs leading-snug text-white/75">Atualiza histórico e comparativo.</span>
                   </button>
                 </div>
               </div>
-              <div className="space-y-3 max-h-[50vh] overflow-auto pr-1">
+              <div className="space-y-3 max-h-[56vh] overflow-auto pr-1">
                 {previousTests.map((test, index) => {
                   const phoneChanged = test.phoneDigits && test.phoneDigits !== onlyDigits(userData.telefone);
                   return (
                     <button key={test.id} type="button" onClick={() => handleViewPastResult(test.id)} className="w-full text-left rounded-lg border border-border bg-black/20 p-4 transition-all hover:border-primary/45 hover:bg-primary/5 focus:outline-none focus:ring-2 focus:ring-primary/50">
-                      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                        <div>
-                          <p className="font-display text-lg text-white">#{index + 1} - {test.primaryProfile} + {test.secondaryProfile}</p>
+                      <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-4 md:items-center">
+                        <div className="min-w-0">
+                          <p className="font-display text-base md:text-lg text-white break-words">#{index + 1} - {test.primaryProfile} + {test.secondaryProfile}</p>
                           <p className="text-xs font-mono text-foreground/50 mt-1">{formatDateTime(test.timestamp)} | {test.leadData.telefone || test.phoneDigits}</p>
                         </div>
-                        <div className="flex gap-2 text-xs font-mono text-foreground/70">
-                          <span>D {test.percentages.D}%</span>
-                          <span>I {test.percentages.I}%</span>
-                          <span>S {test.percentages.S}%</span>
-                          <span>C {test.percentages.C}%</span>
+                        <div className="grid grid-cols-4 gap-2 md:w-56">
+                          {(['D', 'I', 'S', 'C'] as Factor[]).map((factor) => (
+                            <span key={factor} className="rounded-md bg-white/[0.04] px-2 py-2 text-center text-xs font-mono text-foreground/70">{factor} {test.percentages[factor]}%</span>
+                          ))}
                         </div>
                       </div>
                       {phoneChanged && <p className="text-xs text-primary mt-3">Telefone novo detectado. Ao salvar, o cadastro por nome passa a apontar para o telefone informado agora.</p>}
@@ -622,31 +645,28 @@ function DonutChart({ percentages, primaryProfile }: { percentages: Record<Facto
   const factors = ['D', 'I', 'S', 'C'] as Factor[];
   const dominantFactor = [...factors].sort((a, b) => percentages[b] - percentages[a])[0];
   const displayFactor = activeFactor || dominantFactor;
-  const radius = 78;
-  const circumference = 2 * Math.PI * radius;
-  let offset = 0;
+  const outerRadius = 82;
+  const innerRadius = 55;
+  let startAngle = 0;
 
   return (
     <div className="w-full flex flex-col items-center lg:items-start gap-4">
       <div className="relative w-72 h-72 md:w-80 md:h-80 flex items-center justify-center">
-        <svg viewBox="0 0 200 200" className="w-full h-full -rotate-90" role="img" aria-label="Distribuição do perfil DISC">
-          <circle cx="100" cy="100" r={radius} fill="none" stroke="#1f1f1f" strokeWidth="28" />
+        <svg viewBox="0 0 200 200" className="w-full h-full" role="img" aria-label="Distribuição do perfil DISC">
+          <circle cx="100" cy="100" r={outerRadius} fill="#1f1f1f" opacity="0.7" />
+          <circle cx="100" cy="100" r={innerRadius} fill="#0B0B0B" />
           {factors.map((factor) => {
             const value = percentages[factor];
-            const dash = (value / 100) * circumference;
+            const endAngle = startAngle + value * 3.6;
+            const path = donutSegmentPath(100, 100, activeFactor === factor ? 87 : outerRadius, innerRadius, startAngle, endAngle);
+            startAngle = endAngle;
             const segment = (
-              <circle
+              <path
                 key={factor}
-                cx="100"
-                cy="100"
-                r={radius}
-                fill="none"
-                stroke={factorColors[factor]}
-                strokeWidth={activeFactor === factor ? 32 : 26}
-                strokeDasharray={`${dash} ${circumference - dash}`}
-                strokeDashoffset={-offset}
-                strokeLinecap="butt"
-                className="cursor-pointer transition-all duration-200 outline-none"
+                d={path}
+                fill={factorColors[factor]}
+                opacity={activeFactor && activeFactor !== factor ? 0.58 : 1}
+                className="cursor-pointer outline-none transition-opacity duration-200"
                 tabIndex={0}
                 onMouseEnter={() => setActiveFactor(factor)}
                 onMouseLeave={() => setActiveFactor(null)}
@@ -655,9 +675,9 @@ function DonutChart({ percentages, primaryProfile }: { percentages: Record<Facto
                 onClick={() => setActiveFactor(factor)}
               />
             );
-            offset += dash;
             return segment;
           })}
+          <circle cx="100" cy="100" r={innerRadius - 1} fill="#0B0B0B" stroke="rgba(255,255,255,0.08)" strokeWidth="1" pointerEvents="none" />
         </svg>
         <div className="absolute inset-[24%] rounded-full bg-background/95 border border-white/10 flex flex-col items-center justify-center text-center px-4">
           <span className="text-4xl font-display font-bold text-white leading-none">{percentages[displayFactor]}%</span>
