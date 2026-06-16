@@ -49,6 +49,32 @@ function generateRecoveryCode() {
   return crypto.randomBytes(6).toString("hex").toUpperCase();
 }
 
+function encodeSessionPayload(payload: { email: string; issuedAt: number; expiresAt: number }) {
+  return Buffer.from(JSON.stringify(payload), "utf8").toString("base64url");
+}
+
+function decodeSessionPayload(value: string) {
+  try {
+    const parsed = JSON.parse(Buffer.from(value, "base64url").toString("utf8")) as {
+      email?: unknown;
+      issuedAt?: unknown;
+      expiresAt?: unknown;
+    };
+
+    if (typeof parsed.email !== "string" || typeof parsed.issuedAt !== "number" || typeof parsed.expiresAt !== "number") {
+      return null;
+    }
+
+    return {
+      email: normalizeEmail(parsed.email),
+      issuedAt: parsed.issuedAt,
+      expiresAt: parsed.expiresAt,
+    };
+  } catch {
+    return null;
+  }
+}
+
 async function getSessionSecret() {
   const envSecret = process.env.ADMIN_SESSION_SECRET;
   if (envSecret) {
@@ -106,8 +132,7 @@ export async function validateAdminLogin(email: string, password: string) {
   if (!stored) return false;
 
   const normalizedEmail = normalizeEmail(email);
-  const emailMatches = stored.email ? stored.email === normalizedEmail : true;
-  return emailMatches && verifyHash(password, stored.password);
+  return stored.email === normalizedEmail && verifyHash(password, stored.password);
 }
 
 export async function resetAdminPassword(email: string, recoveryCode: string, newPassword: string) {
@@ -115,7 +140,7 @@ export async function resetAdminPassword(email: string, recoveryCode: string, ne
   if (!stored) throw new Error("Conta administrativa ainda não configurada.");
 
   const normalizedEmail = normalizeEmail(email);
-  if (!stored.email || stored.email !== normalizedEmail) {
+  if (stored.email !== normalizedEmail) {
     throw new Error("E-mail administrativo inválido.");
   }
 
@@ -134,7 +159,7 @@ export async function resetAdminPassword(email: string, recoveryCode: string, ne
 export async function createAdminSession(email: string) {
   const issuedAt = Date.now();
   const expiresAt = issuedAt + 1000 * 60 * 60 * 8;
-  const payload = `${normalizeEmail(email)}.${issuedAt}.${expiresAt}`;
+  const payload = encodeSessionPayload({ email: normalizeEmail(email), issuedAt, expiresAt });
   const value = `${payload}.${await sign(payload)}`;
 
   (await cookies()).set(COOKIE_NAME, value, {
@@ -154,16 +179,22 @@ export async function isAdminSessionValid() {
   const value = (await cookies()).get(COOKIE_NAME)?.value;
   if (!value) return false;
 
-  const parts = value.split(".");
-  if (parts.length !== 4) return false;
+  const separatorIndex = value.lastIndexOf(".");
+  if (separatorIndex <= 0) return false;
 
-  const [email, issuedAt, expiresAt, signature] = parts;
-  const payload = `${email}.${issuedAt}.${expiresAt}`;
+  const payload = value.slice(0, separatorIndex);
+  const signature = value.slice(separatorIndex + 1);
+  const session = decodeSessionPayload(payload);
+  if (!session) return false;
+
   const expected = await sign(payload);
   const signatureBuffer = Buffer.from(signature);
   const expectedBuffer = Buffer.from(expected);
   const signatureOk =
     signatureBuffer.length === expectedBuffer.length && crypto.timingSafeEqual(signatureBuffer, expectedBuffer);
 
-  return signatureOk && Number(expiresAt) > Date.now();
+  if (!signatureOk || session.expiresAt <= Date.now()) return false;
+
+  const stored = await getAdminAuthConfig();
+  return Boolean(stored?.email && stored.email === session.email);
 }
