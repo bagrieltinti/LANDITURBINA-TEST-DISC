@@ -179,7 +179,7 @@ function generateAnalysisPDF({
   pdf.setTextColor(255, 255, 255);
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(18);
-  pdf.text(mode === 'full' ? 'RELATÓRIO COMPLETO DISC' : 'COMPARATIVO HISTÓRICO DISC', margin, y);
+  pdf.text(mode === 'full' ? 'RELATÓRIO DISC' : 'COMPARATIVO HISTÓRICO DISC', margin, y);
   y += 8;
   pdf.setFont('helvetica', 'normal');
   pdf.setFontSize(10);
@@ -335,10 +335,11 @@ export default function Home() {
   };
 
   const isTestComplete = randomizedQuestions.every((q) => checkIsQuestionComplete(q.id));
+  const totalAnswers = randomizedQuestions.length * 4;
+  const answeredCount = Object.values(answers).reduce((acc, curr) => acc + Object.values(curr).filter((v) => v !== null).length, 0);
+  const missingAnswers = totalAnswers - answeredCount;
   const progressPercent = Math.round(
-    (Object.values(answers).reduce((acc, curr) => acc + Object.values(curr).filter((v) => v !== null).length, 0) /
-      (randomizedQuestions.length * 4)) *
-      100,
+    (answeredCount / totalAnswers) * 100,
   );
 
   const handleLookup = async () => {
@@ -436,8 +437,8 @@ export default function Home() {
           <motion.section key="onboarding" initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.97 }} className="flex-1 flex items-center justify-center p-6">
             <div className="w-full max-w-md bg-panel/40 backdrop-blur-xl border border-border rounded-xl p-8 shadow-2xl relative overflow-hidden">
               <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
-              <h1 className="font-display font-bold text-3xl mb-2 text-white">IDENTIFIQUE-SE</h1>
-              <p className="text-sm text-foreground/60 mb-8 max-w-[300px]">Informe seu nome completo e telefone para localizar resultados anteriores.</p>
+              <h1 className="font-display font-bold text-3xl mb-2 text-white">COMECE O TESTE</h1>
+              <p className="text-sm text-foreground/60 mb-8 max-w-[300px]">Digite seus dados para iniciar ou recuperar seu histórico.</p>
               <div className="space-y-5">
                 <label className="block">
                   <span className="text-xs font-mono text-foreground/50 uppercase">Nome completo</span>
@@ -515,7 +516,7 @@ export default function Home() {
                   <h1 className="font-display font-bold text-xl leading-none">TESTE DE PERFIL</h1>
                   <p className="text-xs font-mono text-foreground/45 mt-1">{normalizedDisplayName}</p>
                 </div>
-                <span className="text-xs font-mono text-foreground/50">{progressPercent}% CONCLUÍDO</span>
+                <span className="text-xs font-mono text-foreground/50">{missingAnswers > 0 ? `Faltam ${missingAnswers} respostas` : 'Tudo respondido'}</span>
               </div>
               <div className="w-full h-1 bg-white/5 relative overflow-hidden">
                 <motion.div initial={{ width: 0 }} animate={{ width: `${progressPercent}%` }} className="absolute inset-y-0 left-0 bg-primary" />
@@ -526,15 +527,19 @@ export default function Home() {
                 {previousTests.length === 0 && (
                   <div className="mb-6 rounded-xl border border-primary/25 bg-primary/10 p-5">
                     <p className="text-xs font-mono uppercase tracking-widest text-primary">Primeiro teste encontrado</p>
-                    <h2 className="mt-2 font-display text-2xl font-bold text-white">Vamos criar sua primeira análise DISC</h2>
+                    <h2 className="mt-2 font-display text-2xl font-bold text-white">Responda 10 situações</h2>
                     <p className="mt-3 text-sm leading-relaxed text-foreground/70">
-                      Não encontramos resultados anteriores para este nome e telefone. Responda com calma: em cada situação, use cada nota de 1 a 4 apenas uma vez, sendo 4 o comportamento que mais parece com você.
+                      Em cada situação, dê uma nota para cada linha. Use 1, 2, 3 e 4 apenas uma vez.
                     </p>
                   </div>
                 )}
-                <p className="text-sm md:text-base text-foreground/80">Dê notas de <strong className="text-white">1 a 4</strong> para cada linha. <strong className="text-white underline decoration-primary underline-offset-4 decoration-2">4 = mais parece com você</strong>.</p>
-                <div className="mt-4 p-4 border border-primary/20 bg-primary/5 rounded-lg">
-                  <p className="text-sm font-mono text-foreground/60 uppercase">Regra: não repita números na mesma situação. A escolha é exclusiva.</p>
+                <div className="p-4 border border-primary/20 bg-primary/5 rounded-lg">
+                  <p className="text-xs font-mono uppercase tracking-widest text-primary">Como responder</p>
+                  <div className="mt-3 space-y-2 text-sm text-foreground/80">
+                    <p>Use cada número uma vez em cada situação.</p>
+                    <p>4 = mais parece com você</p>
+                    <p>1 = menos parece com você</p>
+                  </div>
                 </div>
               </div>
               {randomizedQuestions.map((q, index) => {
@@ -573,7 +578,7 @@ export default function Home() {
               })}
               <div className="flex justify-end pt-8 border-t border-border">
                 <button disabled={!isTestComplete || isSaving} onClick={handleFinishTest} className={cn('px-8 py-4 font-display font-medium rounded-lg transition-all', isTestComplete && !isSaving ? 'bg-primary text-white hover:bg-primary/90 hover:-translate-y-1' : 'bg-panel text-foreground/40 cursor-not-allowed')}>
-                  {isSaving ? 'PROCESSANDO...' : isTestComplete ? 'CALCULAR RESULTADO' : 'PONTUE TODAS AS SITUAÇÕES'}
+                  {isSaving ? 'PROCESSANDO...' : isTestComplete ? 'VER MEU RESULTADO' : 'RESPONDA TUDO PARA VER O RESULTADO'}
                 </button>
               </div>
             </div>
@@ -586,7 +591,7 @@ export default function Home() {
               <div className="w-full flex flex-col md:flex-row md:justify-between md:items-center gap-5 mb-7 pb-6 border-b border-white/10">
                 <div>
                   <Image src="https://i.imgur.com/PMCjrpw.png" alt="Landi Turbina" width={140} height={40} className="w-32 md:w-40 object-contain mb-4" />
-                  <h1 className="font-display font-bold text-2xl md:text-3xl uppercase tracking-tight text-white mb-1">ANÁLISE DE PERFORMANCE</h1>
+                  <h1 className="font-display font-bold text-2xl md:text-3xl uppercase tracking-tight text-white mb-1">SEU RESULTADO DISC</h1>
                   <p className="text-foreground/50 font-mono text-sm uppercase">{normalizedDisplayName} | {formatDateTime(resultTimestamp || new Date().toISOString())}</p>
                 </div>
                 <div className="no-print flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:justify-end">
@@ -596,7 +601,7 @@ export default function Home() {
                     </button>
                   )}
                   <button onClick={() => generateAnalysisPDF({ mode: 'full', filename: `Relatorio_DISC_${safePdfName(normalizedDisplayName)}.pdf`, normalizedDisplayName, result: testResult, comparisonTests, reportDate: resultTimestamp })} className="justify-center bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-lg px-4 py-2 font-display text-sm font-medium transition-all flex items-center gap-2">
-                    <Download size={16} /> RELATÓRIO COMPLETO
+                    <Download size={16} /> BAIXAR RELATÓRIO
                   </button>
                 </div>
               </div>
