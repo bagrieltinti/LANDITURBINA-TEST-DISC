@@ -39,6 +39,37 @@ const quadrantColors: Record<Factor, string> = {
   S: '#0E8F4A',
   C: '#2A37B8',
 };
+const landiLogoUrl = 'https://i.imgur.com/PMCjrpw.png';
+const profileGuide: Array<{ factor: Factor; label: string; summary: string; detail: string; accentClass: string }> = [
+  {
+    factor: 'I',
+    label: 'Comunicador',
+    summary: 'Comunicativo, persuasivo, otimista.',
+    detail: 'Valoriza conexões, influencia pelo entusiasmo e tende a ganhar energia em ambientes com troca e movimento.',
+    accentClass: 'border-orange-400/35 bg-orange-400/10 text-orange-300',
+  },
+  {
+    factor: 'D',
+    label: 'Executor',
+    summary: 'Dominante, competitivo, decidido.',
+    detail: 'Busca resultado, assume direção com rapidez e costuma preferir decisões objetivas e metas claras.',
+    accentClass: 'border-red-500/35 bg-red-500/10 text-red-300',
+  },
+  {
+    factor: 'S',
+    label: 'Planejador',
+    summary: 'Calmo, paciente, estável.',
+    detail: 'Gosta de ritmo consistente, coopera bem em equipe e tende a preservar segurança e continuidade.',
+    accentClass: 'border-yellow-400/35 bg-yellow-400/10 text-yellow-200',
+  },
+  {
+    factor: 'C',
+    label: 'Analista',
+    summary: 'Preciso, criterioso, organizado.',
+    detail: 'Prefere dados, critério e método; costuma cuidar dos detalhes antes de concluir ou agir.',
+    accentClass: 'border-green-400/35 bg-green-400/10 text-green-300',
+  },
+];
 
 function nameInputValue(value: string) {
   return value
@@ -429,7 +460,7 @@ export default function Home() {
       <AnimatePresence mode="wait">
         {appState === 'splash' && (
           <motion.div key="splash" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, scale: 1.04 }} transition={{ duration: 0.5 }} className="fixed inset-0 z-50 flex items-center justify-center bg-[#0B0B0B]">
-            <Image src="https://i.imgur.com/PMCjrpw.png" alt="Landi Turbina" width={240} height={72} className="w-52 md:w-64 object-contain" priority />
+            <Image src={landiLogoUrl} alt="Landi Turbina" width={240} height={72} className="w-52 md:w-64 object-contain" priority />
           </motion.div>
         )}
 
@@ -437,6 +468,7 @@ export default function Home() {
           <motion.section key="onboarding" initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.97 }} className="flex-1 flex items-center justify-center p-6">
             <div className="w-full max-w-md bg-panel/40 backdrop-blur-xl border border-border rounded-xl p-8 shadow-2xl relative overflow-hidden">
               <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
+              <Image src={landiLogoUrl} alt="Landi Turbina" width={120} height={36} className="mx-auto mb-7 h-auto w-28 object-contain" priority />
               <h1 className="font-display font-bold text-3xl mb-2 text-white">COMECE O TESTE</h1>
               <p className="text-sm text-foreground/60 mb-8 max-w-[300px]">Digite seus dados para iniciar ou recuperar seu histórico.</p>
               <div className="space-y-5">
@@ -541,6 +573,12 @@ export default function Home() {
                     <p>1 = menos parece com você</p>
                   </div>
                 </div>
+                <div className="mt-4 rounded-lg border border-white/10 bg-panel/35 p-4">
+                  <p className="text-xs font-mono uppercase tracking-widest text-foreground/45">O que é esse teste?</p>
+                  <p className="mt-2 text-sm leading-relaxed text-foreground/75">
+                    Este teste ajuda a identificar seu perfil comportamental predominante: Comunicador, Executor, Planejador ou Analista.
+                  </p>
+                </div>
               </div>
               {randomizedQuestions.map((q, index) => {
                 const qAnswers = answers[q.id] || {};
@@ -590,7 +628,7 @@ export default function Home() {
             <div className="w-full bg-[#0B0B0B] p-4 sm:p-5 md:p-7 rounded-xl shadow-2xl">
               <div className="w-full flex flex-col md:flex-row md:justify-between md:items-center gap-5 mb-7 pb-6 border-b border-white/10">
                 <div>
-                  <Image src="https://i.imgur.com/PMCjrpw.png" alt="Landi Turbina" width={140} height={40} className="w-32 md:w-40 object-contain mb-4" />
+                  <Image src={landiLogoUrl} alt="Landi Turbina" width={140} height={40} className="w-32 md:w-40 object-contain mb-4" />
                   <h1 className="font-display font-bold text-2xl md:text-3xl uppercase tracking-tight text-white mb-1">SEU RESULTADO DISC</h1>
                   <p className="text-foreground/50 font-mono text-sm uppercase">{normalizedDisplayName} | {formatDateTime(resultTimestamp || new Date().toISOString())}</p>
                 </div>
@@ -639,6 +677,7 @@ export default function Home() {
                   <DiscQuadrantMap percentages={testResult.percentages} />
                 </div>
               </div>
+              <ProfileGuide />
               <div className="mt-5">
                 {hasComparison ? (
                   <ComparisonBlock normalizedDisplayName={normalizedDisplayName} comparisonTests={comparisonTests} />
@@ -654,6 +693,53 @@ export default function Home() {
         )}
       </AnimatePresence>
     </main>
+  );
+}
+
+function ProfileGuide() {
+  return (
+    <section className="mt-6 rounded-xl border border-white/10 bg-panel/30 p-4 md:p-6">
+      <div className="mb-5 flex flex-col gap-1">
+        <p className="text-xs font-mono uppercase tracking-widest text-primary">Entenda os 4 perfis</p>
+        <h2 className="font-display text-xl font-bold text-white">Leitura rápida dos estilos DISC</h2>
+      </div>
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {profileGuide.map((profile) => (
+          <div key={profile.factor} className={cn('rounded-lg border p-4', profile.accentClass)}>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="font-display text-base font-bold text-white">{profile.label}</p>
+                <p className="mt-1 text-xs font-mono uppercase tracking-widest opacity-80">Perfil {profile.factor}</p>
+              </div>
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-black/25 font-mono text-sm font-bold text-white">
+                {profile.factor}
+              </span>
+            </div>
+            <p className="mt-4 text-sm leading-relaxed text-foreground/80">{profile.summary}</p>
+          </div>
+        ))}
+      </div>
+
+      <details className="group mt-4 rounded-lg border border-white/10 bg-black/20 p-4">
+        <summary className="cursor-pointer list-none font-display text-sm font-medium text-white outline-none transition-colors hover:text-primary">
+          <span className="inline-flex items-center gap-2">
+            Ver detalhes dos perfis
+            <span className="font-mono text-xs text-foreground/40 transition-transform group-open:rotate-45">+</span>
+          </span>
+        </summary>
+        <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
+          {profileGuide.map((profile) => (
+            <div key={profile.factor} className="rounded-lg border border-white/10 bg-white/[0.03] p-3">
+              <p className="text-sm font-display font-semibold text-white">
+                {profile.label} ({profile.factor})
+              </p>
+              <p className="mt-1 text-xs leading-relaxed text-foreground/60">{profile.detail}</p>
+            </div>
+          ))}
+        </div>
+      </details>
+    </section>
   );
 }
 
