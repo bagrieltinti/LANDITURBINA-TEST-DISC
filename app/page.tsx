@@ -468,7 +468,7 @@ export default function Home() {
           <motion.section key="onboarding" initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.97 }} className="flex-1 flex items-center justify-center p-6">
             <div className="w-full max-w-md bg-panel/40 backdrop-blur-xl border border-border rounded-xl p-8 shadow-2xl relative overflow-hidden">
               <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
-              <Image src={landiLogoUrl} alt="Landi Turbina" width={120} height={36} className="mx-auto mb-7 h-auto w-28 object-contain" priority />
+              <Image src={landiLogoUrl} alt="Landi Turbina" width={180} height={54} className="mx-auto mb-9 h-auto w-40 object-contain" priority />
               <h1 className="font-display font-bold text-3xl mb-2 text-white">COMECE O TESTE</h1>
               <p className="text-sm text-foreground/60 mb-8 max-w-[300px]">Digite seus dados para iniciar ou recuperar seu histórico.</p>
               <div className="space-y-5">
@@ -543,10 +543,14 @@ export default function Home() {
         {appState === 'test' && (
           <motion.section key="test" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex-1 flex flex-col items-center w-full">
             <div className="sticky top-0 w-full z-40 bg-black/80 backdrop-blur-md border-b border-white/5 pt-4">
-              <div className="w-full max-w-4xl mx-auto px-4 flex justify-between items-end mb-3">
-                <div>
-                  <h1 className="font-display font-bold text-xl leading-none">TESTE DE PERFIL</h1>
-                  <p className="text-xs font-mono text-foreground/45 mt-1">{normalizedDisplayName}</p>
+              <div className="w-full max-w-4xl mx-auto px-4 flex justify-between items-end gap-4 mb-4">
+                <div className="min-w-0">
+                  <Image src={landiLogoUrl} alt="Landi Turbina" width={156} height={47} className="mb-3 h-auto w-36 object-contain" priority />
+                  <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                    <h1 className="font-display font-bold text-xl leading-none text-white">TESTE DE PERFIL</h1>
+                    <span className="rounded-md border border-primary/40 bg-primary/10 px-2 py-1 font-mono text-xs font-bold text-primary">DISC</span>
+                  </div>
+                  <p className="text-xs font-mono text-foreground/45 mt-2 truncate">{normalizedDisplayName}</p>
                 </div>
                 <span className="text-xs font-mono text-foreground/50">{missingAnswers > 0 ? `Faltam ${missingAnswers} respostas` : 'Tudo respondido'}</span>
               </div>
@@ -559,16 +563,16 @@ export default function Home() {
                 {previousTests.length === 0 && (
                   <div className="mb-6 rounded-xl border border-primary/25 bg-primary/10 p-5">
                     <p className="text-xs font-mono uppercase tracking-widest text-primary">Primeiro teste encontrado</p>
-                    <h2 className="mt-2 font-display text-2xl font-bold text-white">Responda 10 situações</h2>
+                    <h2 className="mt-2 font-display text-2xl font-bold text-white">Responda o teste</h2>
                     <p className="mt-3 text-sm leading-relaxed text-foreground/70">
-                      Em cada situação, dê uma nota para cada linha. Use 1, 2, 3 e 4 apenas uma vez.
+                      Dê uma nota para cada linha. Use 1, 2, 3 e 4 apenas uma vez em cada bloco.
                     </p>
                   </div>
                 )}
                 <div className="p-4 border border-primary/20 bg-primary/5 rounded-lg">
                   <p className="text-xs font-mono uppercase tracking-widest text-primary">Como responder</p>
                   <div className="mt-3 space-y-2 text-sm text-foreground/80">
-                    <p>Use cada número uma vez em cada situação.</p>
+                    <p>Use cada número apenas uma vez por bloco.</p>
                     <p>4 = mais parece com você</p>
                     <p>1 = menos parece com você</p>
                   </div>
@@ -586,7 +590,7 @@ export default function Home() {
                 return (
                   <div key={q.id} className={cn('flex flex-col gap-6 p-6 rounded-xl border transition-colors duration-300', isComplete ? 'border-green-900/50 bg-[#0B0B0B]' : 'border-border bg-panel/30')}>
                     <div className="flex justify-between items-center">
-                      <h3 className="font-display font-bold text-xl text-white/90 uppercase tracking-wide">SITUAÇÃO {index + 1}</h3>
+                      <h3 className="font-display font-bold text-xl text-white/90 uppercase tracking-wide">BLOCO {index + 1}</h3>
                       {isComplete && <span className="text-xs font-mono font-medium text-green-500 bg-green-500/10 px-2 py-1 rounded">OK</span>}
                     </div>
                     <div className="space-y-4">
@@ -616,7 +620,7 @@ export default function Home() {
               })}
               <div className="flex justify-end pt-8 border-t border-border">
                 <button disabled={!isTestComplete || isSaving} onClick={handleFinishTest} className={cn('px-8 py-4 font-display font-medium rounded-lg transition-all', isTestComplete && !isSaving ? 'bg-primary text-white hover:bg-primary/90 hover:-translate-y-1' : 'bg-panel text-foreground/40 cursor-not-allowed')}>
-                  {isSaving ? 'PROCESSANDO...' : isTestComplete ? 'VER MEU RESULTADO' : 'RESPONDA TUDO PARA VER O RESULTADO'}
+                  {isSaving ? 'PROCESSANDO...' : isTestComplete ? 'VER MEU RESULTADO' : 'RESPONDA TUDO PARA VER SEU RESULTADO'}
                 </button>
               </div>
             </div>

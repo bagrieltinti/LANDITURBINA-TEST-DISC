@@ -97,7 +97,7 @@ function getReportCopy(combinedKey: string): string {
     "SI": "A cola de alto torque que mantém tudo rodando redondo. Escuta ativamente, ajeita o processo e garante que o ambiente seja perfeito para operar no limite. Sustenta a potência sem reclamar.",
     "SC": "Padrão não se improvisa. Você mapeia cada detalhe antes da solda. Sua constância garante que o processo saia perfeito do início ao fim, mantendo o nível de exigência alto e a entrega cravada sem dor de cabeça.",
 
-    "CD": "Exigência de altíssimo nível. Analisa a situação e corta o mal pela raiz. O alvo é a perfeição estrutural e o resultado final da peça não se negocia. Qualidade acima da emoção.",
+    "CD": "Exigência de altíssimo nível. Analisa o contexto e corta o mal pela raiz. O alvo é a perfeição estrutural e o resultado final da peça não se negocia. Qualidade acima da emoção.",
     "CI": "Um detalhe técnico explicado para quem vive. Traz a lógica fria para o jogo, garantindo que a base é perfeitamente sólida antes de contar qualquer história.",
     "CS": "Regra clara, método cravado. Sem sobressaltos e com zero margem para erro amador. Onde você passa, aplica engenharia de precisão e bota ordem em toda a casa."
   };
